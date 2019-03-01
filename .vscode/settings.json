@@ -3,6 +3,9 @@
         "hashtables.h": "c",
         "allowedips.h": "c",
         "peer.h": "c",
-        "rtnetlink.h": "c"
+        "rtnetlink.h": "c",
+        "test_extras.h": "c",
+        "config.h": "c",
+        "random.h": "c"
     }
 }
