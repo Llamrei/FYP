@@ -71,6 +71,7 @@ struct noise_handshake {
 	enum noise_handshake_state state;
 	u64 last_initiation_consumption;
 
+	// This is set in static_static?
 	struct noise_static_identity *static_identity;
 
 	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN];

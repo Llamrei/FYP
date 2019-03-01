@@ -50,6 +50,9 @@ bool wg_noise_precompute_static_static(struct wg_peer *peer)
 
 	down_write(&peer->handshake.lock);
 	if (peer->handshake.static_identity->has_identity)
+		// Does DH shared key exchange and stores in precomputed static_static
+		// Presumably remote_static is remote public
+		// static_identity has our private and public keys
 		ret = curve25519(
 			peer->handshake.precomputed_static_static,
 			peer->handshake.static_identity->static_private,
@@ -369,12 +372,14 @@ static void derive_keys(struct noise_symmetric_key *first_dst,
 static bool __must_check mix_dh(u8 chaining_key[NOISE_HASH_LEN],
 				u8 key[NOISE_SYMMETRIC_KEY_LEN],
 				const u8 private[NOISE_PUBLIC_KEY_LEN],
-				const u8 public[NOISE_PUBLIC_KEY_LEN])
+				const u8 public[NOISE_PUBLIC_KEY_LEN]),
+				const bool role
 {
 	u8 dh_calculation[NOISE_PUBLIC_KEY_LEN];
-
+	// This seems to be the function to change
 	if (unlikely(!curve25519(dh_calculation, private, public)))
 		return false;
+	// Mixes DH into the KDF (Key Derivation Function)
 	kdf(chaining_key, key, NULL, dh_calculation, NOISE_HASH_LEN,
 	    NOISE_SYMMETRIC_KEY_LEN, 0, NOISE_PUBLIC_KEY_LEN, chaining_key);
 	memzero_explicit(dh_calculation, NOISE_PUBLIC_KEY_LEN);

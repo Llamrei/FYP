@@ -33,13 +33,18 @@ static int __init mod_init(void)
 	    !wg_ratelimiter_selftest())
 		return -ENOTRECOVERABLE;
 #endif
-	// Something to do with a hashing funciton initialisation
+	// Performs any initialisation required to run the Noise protocol - in this instance it is just the hashing func
 	wg_noise_init();
 
+	// Seems to register the device with a netlink - 
+	// rtnl_link_register
+	// rtnl = routing net link
 	ret = wg_device_init();
 	if (ret < 0)
 		goto err_device;
-
+	// Seems 
+	// genl_register_family
+	// genl = generic network link
 	ret = wg_genetlink_init();
 	if (ret < 0)
 		goto err_netlink;
