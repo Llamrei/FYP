@@ -375,11 +375,11 @@ static bool __must_check mix_dh(u8 chaining_key[NOISE_HASH_LEN],
 				const u8 private[NOISE_PUBLIC_KEY_LEN],
 				const u8 public[NOISE_PUBLIC_KEY_LEN])
 {
+	// Updates key and chaining key through Diffie Hellman
 	u8 dh_calculation[NOISE_PUBLIC_KEY_LEN];
-	// This seems to be the function to change
 	if (unlikely(!curve25519(dh_calculation, private, public)))
 		return false;
-	// Mixes DH into the KDF (Key Derivation Function)
+	// Mixes DH result with chaining key to produce new chaining key and corresponding symemtric key
 	kdf(chaining_key, key, NULL, dh_calculation, NOISE_HASH_LEN,
 	    NOISE_SYMMETRIC_KEY_LEN, 0, NOISE_PUBLIC_KEY_LEN, chaining_key);
 	memzero_explicit(dh_calculation, NOISE_PUBLIC_KEY_LEN);
@@ -492,6 +492,7 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	if (unlikely(!handshake->static_identity->has_identity))
 		goto out;
 
+	// cpu_to_le32 converts endianess to be appropriate for architecture
 	dst->header.type = cpu_to_le32(MESSAGE_HANDSHAKE_INITIATION);
 
 	handshake_init(handshake->chaining_key, handshake->hash,
@@ -502,6 +503,7 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
 					handshake->ephemeral_private))
 		goto out;
+	// Generate ephemeral keypair and store and attach to message
 	message_ephemeral(dst->unencrypted_ephemeral,
 			  dst->unencrypted_ephemeral, handshake->chaining_key,
 			  handshake->hash);
@@ -512,22 +514,26 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	// TODO: Integrate with message_ephemeral in a bit
 
 	/* es */
+	// mixes in dh result of our ephemeral private and their remote static
 	if (!mix_dh(handshake->chaining_key, key, handshake->ephemeral_private,
 		    handshake->remote_static))
 		goto out;
 
 	/* s */
+	// Uses 'key' generated above to encrypt our static pub_key
 	message_encrypt(dst->encrypted_static,
 			handshake->static_identity->static_public,
 			NOISE_PUBLIC_KEY_LEN, key, handshake->hash);
 
 	/* ss */
+	// Not using mix_dh as we have precomputed ss result
 	kdf(handshake->chaining_key, key, NULL,
 	    handshake->precomputed_static_static, NOISE_HASH_LEN,
 	    NOISE_SYMMETRIC_KEY_LEN, 0, NOISE_PUBLIC_KEY_LEN,
 	    handshake->chaining_key);
 
 	/* {t} */
+	// Stamp it to prevent replay attacks
 	tai64n_now(timestamp);
 	message_encrypt(dst->encrypted_timestamp, timestamp,
 			NOISE_TIMESTAMP_LEN, key, handshake->hash);
@@ -536,6 +542,7 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 		&handshake->entry.peer->device->index_hashtable,
 		&handshake->entry);
 
+	// Keeping track of the state we're in
 	handshake->state = HANDSHAKE_CREATED_INITIATION;
 	ret = true;
 
