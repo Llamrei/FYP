@@ -8,6 +8,14 @@
 #include "messages.h"
 #include "hashtables.h"
 
+/* to be put in a wrapper header */
+#include "P751_api.h"
+// TODO:Aliasing Alice -> Initiator and Bob -> Reciever
+#define InitiatorEphGen EphemeralKeyGeneration_A_SIDHp751
+#define InitiatorSSGen EphemeralSecretAgreement_A_SIDHp751
+#define ReceiverEphGen EphemeralKeyGeneration_B_SIDHp751
+#define ReceiverSSGen EphemeralSecretAgreement_A_SIDHp751
+
 #include <linux/types.h>
 #include <linux/spinlock.h>
 #include <linux/atomic.h>
@@ -74,12 +82,16 @@ struct noise_handshake {
 	// This is set in static_static?
 	struct noise_static_identity *static_identity;
 
-	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN];
+	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN]; //Is cleary a private key, just a consequence of priv/public ECDH keys being same size - seems iffy
 	u8 remote_static[NOISE_PUBLIC_KEY_LEN];
-	u8 remote_ephemeral[NOISE_PUBLIC_KEY_LEN];
+	u8 remote_ephemeral[NOISE_PUBLIC_KEY_LEN]; // Inconsistent naming policy for location_type vs above type_location
 	u8 precomputed_static_static[NOISE_PUBLIC_KEY_LEN];
 
 	u8 preshared_key[NOISE_SYMMETRIC_KEY_LEN];
+
+	// For PQ resistance
+	unsigned char PQ_ephemeral_private[SIDH_SECRETKEYBYTES];
+	unsigned char PQ_remote_ephemeral[SIDH_PUBLICKEYBYTES];
 
 	u8 hash[NOISE_HASH_LEN];
 	u8 chaining_key[NOISE_HASH_LEN];

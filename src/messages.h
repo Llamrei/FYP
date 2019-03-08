@@ -9,7 +9,7 @@
 #include <zinc/curve25519.h>
 #include <zinc/chacha20poly1305.h>
 #include <zinc/blake2s.h>
-
+#include "P751_api.h"
 #include <linux/kernel.h>
 #include <linux/param.h>
 #include <linux/skbuff.h>
@@ -81,6 +81,7 @@ struct message_handshake_initiation {
 	struct message_header header;
 	__le32 sender_index;
 	u8 unencrypted_ephemeral[NOISE_PUBLIC_KEY_LEN];
+	unsigned char unencrypted_PQ_ephemeral[SIDH_PUBLICKEYBYTES]; //Alice
 	u8 encrypted_static[noise_encrypted_len(NOISE_PUBLIC_KEY_LEN)];
 	u8 encrypted_timestamp[noise_encrypted_len(NOISE_TIMESTAMP_LEN)];
 	struct message_macs macs;
@@ -90,6 +91,7 @@ struct message_handshake_response {
 	struct message_header header;
 	__le32 sender_index;
 	__le32 receiver_index;
+	unsigned char unencrypted_PQ_ephemeral[SIDH_PUBLICKEYBYTES]; //Bob
 	u8 unencrypted_ephemeral[NOISE_PUBLIC_KEY_LEN];
 	u8 encrypted_nothing[noise_encrypted_len(0)];
 	struct message_macs macs;
