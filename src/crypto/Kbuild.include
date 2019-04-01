@@ -37,6 +37,8 @@ zinc-$(CONFIG_ZINC_ARCH_X86_64) += blake2s/blake2s-x86_64.o
 zinc-y += curve25519/curve25519.o
 zinc-$(CONFIG_ZINC_ARCH_ARM) += curve25519/curve25519-arm.o
 
+postquantum-y += P751/P751.o P751/generic/fp_generic.o random/random.o sha3/fips202.o
+
 quiet_cmd_perlasm = PERLASM $@
       cmd_perlasm = $(PERL) $< > $@
 $(obj)/%.S: $(src)/%.pl FORCE
@@ -48,6 +50,7 @@ targets := $(patsubst $(kbuild-dir)/%.pl,%.S,$(wildcard $(patsubst %.o,$(kbuild-
 .SECONDARY:
 
 wireguard-y += $(addprefix crypto/zinc/,$(zinc-y))
+wireguard-y += $(addprefix crypto/sidh/,$(postquantum-y))
 ccflags-y += -I$(src)/crypto/include
 ccflags-$(CONFIG_ZINC_ARCH_X86_64) += -DCONFIG_ZINC_ARCH_X86_64
 ccflags-$(CONFIG_ZINC_ARCH_ARM) += -DCONFIG_ZINC_ARCH_ARM
