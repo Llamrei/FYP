@@ -744,7 +744,7 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 		KERN_DEBUG,"wireguard: 3. PQK: ",
 		DUMP_PREFIX_NONE, 32, 8,
 		pqk,SIDH_BYTES,0);
-	// mix_pqk(handshake->chaining_key, handshake->hash, key, pqk);
+	mix_pqk(handshake->chaining_key, handshake->hash, key, pqk);
 
 	/* {} */
 	message_encrypt(dst->encrypted_nothing, NULL, 0, key, handshake->hash);
@@ -837,7 +837,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 		KERN_DEBUG,"wireguard: 4. PQK: ",
 		DUMP_PREFIX_NONE, 32, 8,
 		pqk,SIDH_BYTES,0);
-	// mix_pqk(chaining_key, hash, key, pqk);
+	mix_pqk(chaining_key, hash, key, pqk);
 
 	/* {} */
 	if (!message_decrypt(NULL, src->encrypted_nothing,
@@ -899,12 +899,19 @@ bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
 	if (new_keypair->i_am_the_initiator){
 		derive_keys(&new_keypair->sending, &new_keypair->receiving,
 			    handshake->chaining_key);
-		pr_debug("Sending key: %x", &new_keypair->sending.key);
+		pr_debug("Sending key peer %llu:",handshake->entry.peer->internal_id);
+		print_hex_dump(
+		KERN_DEBUG,"wireguard: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		&new_keypair->receiving.key,NOISE_SYMMETRIC_KEY_LEN,0);
 	}
 	else {
 		derive_keys(&new_keypair->receiving, &new_keypair->sending,
 			    handshake->chaining_key);
-		pr_debug("Receiving key: %x", &new_keypair->receiving.key);
+		print_hex_dump(
+		KERN_DEBUG,"wireguard: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		&new_keypair->sending.key,NOISE_SYMMETRIC_KEY_LEN,0);
 	}
 		
 	handshake_zero(handshake);
