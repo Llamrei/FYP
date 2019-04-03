@@ -24,3 +24,4 @@ src/tests/qemu/distfiles/
 
 .vscode/
 mmap*
+ratelimiter*
