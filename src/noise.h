@@ -9,7 +9,7 @@
 #include "hashtables.h"
 
 /* to be put in a wrapper header */
-#include "P751_api.h"
+#include "crypto/sidh/P751/P751_api.h"
 // TODO:Aliasing Alice -> Initiator and Bob -> Reciever
 #define InitiatorEphGen EphemeralKeyGeneration_A_SIDHp751
 #define InitiatorSSGen EphemeralSecretAgreement_A_SIDHp751

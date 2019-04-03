@@ -9,7 +9,7 @@
 #include "messages.h"
 #include "queueing.h"
 #include "hashtables.h"
-#include "P751_api.h"
+#include "crypto/sidh/P751/P751_api.h"
 
 #include <linux/rcupdate.h>
 #include <linux/slab.h>

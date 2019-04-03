@@ -9,7 +9,7 @@
 #include <zinc/curve25519.h>
 #include <zinc/chacha20poly1305.h>
 #include <zinc/blake2s.h>
-#include "P751_api.h"
+#include "crypto/sidh/P751/P751_api.h"
 #include <linux/kernel.h>
 #include <linux/param.h>
 #include <linux/skbuff.h>
