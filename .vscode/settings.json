@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "hashtables.h": "c",
-        "allowedips.h": "c",
-        "peer.h": "c"
-    }
-}
