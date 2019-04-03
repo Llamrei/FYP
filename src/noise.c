@@ -513,7 +513,15 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 
 	/* pq_e */
 	random_mod_Initiator(handshake->PQ_ephemeral_private);
-	InitiatorEphGen(handshake->PQ_remote_ephemeral,dst->unencrypted_PQ_ephemeral);
+	InitiatorEphGen(handshake->PQ_ephemeral_private,dst->unencrypted_PQ_ephemeral);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 1. Secret: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		handshake->PQ_ephemeral_private,SIDH_SECRETKEYBYTES,0);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 1. Public: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		dst->unencrypted_PQ_ephemeral,SIDH_PUBLICKEYBYTES,0);
 	// TODO: Integrate with message_ephemeral in a bit
 
 	/* es */
@@ -586,6 +594,14 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 	
 	/* pq_e */
 	memcpy(pq_e,src->unencrypted_PQ_ephemeral,SIDH_PUBLICKEYBYTES);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 2. Observed Public: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		src->unencrypted_PQ_ephemeral,SIDH_PUBLICKEYBYTES,0);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 2. Observed Public Copy: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		pq_e,SIDH_PUBLICKEYBYTES,0);
 
 	/* es */
 	if (!mix_dh(chaining_key, key, wg->static_identity.static_private, e)){
@@ -636,6 +652,10 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 	down_write(&handshake->lock);
 	memcpy(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
 	memcpy(handshake->PQ_remote_ephemeral, pq_e, SIDH_PUBLICKEYBYTES);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 2. Observed Public Copy Copy: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		handshake->PQ_remote_ephemeral,SIDH_PUBLICKEYBYTES,0);
 	memcpy(handshake->latest_timestamp, t, NOISE_TIMESTAMP_LEN);
 	memcpy(handshake->hash, hash, NOISE_HASH_LEN);
 	memcpy(handshake->chaining_key, chaining_key, NOISE_HASH_LEN);
@@ -691,6 +711,14 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 	/* pq_e */
 	random_mod_Receiver(handshake->PQ_ephemeral_private);
 	ReceiverEphGen(handshake->PQ_ephemeral_private,dst->unencrypted_PQ_ephemeral);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 3. Rec. Private: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		handshake->PQ_ephemeral_private,SIDH_SECRETKEYBYTES,0);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 3. Rec. Public: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		dst->unencrypted_PQ_ephemeral,SIDH_PUBLICKEYBYTES,0);
 
 	/* ee */
 	if (!mix_dh(handshake->chaining_key, NULL, handshake->ephemeral_private,
@@ -712,6 +740,10 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 
 	/* pqk */
 	ReceiverSSGen(handshake->PQ_ephemeral_private,handshake->PQ_remote_ephemeral, pqk);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 3. PQK: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		pqk,SIDH_BYTES,0);
 	// mix_pqk(handshake->chaining_key, handshake->hash, key, pqk);
 
 	/* {} */
@@ -778,6 +810,10 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	
 	/* pq_e */
 	memcpy(pq_e,src->unencrypted_PQ_ephemeral, SIDH_PUBLICKEYBYTES);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 4. Sender observed public: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		src->unencrypted_PQ_ephemeral,SIDH_PUBLICKEYBYTES,0);
 
 	/* ee */
 	if (!mix_dh(chaining_key, NULL, ephemeral_private, e)){
@@ -797,6 +833,10 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	/* pqk */
 	// I am the initiator if i consume the response
 	InitiatorSSGen(handshake->PQ_ephemeral_private, pq_e, pqk);
+	print_hex_dump(
+		KERN_DEBUG,"wireguard: 4. PQK: ",
+		DUMP_PREFIX_NONE, 32, 8,
+		pqk,SIDH_BYTES,0);
 	// mix_pqk(chaining_key, hash, key, pqk);
 
 	/* {} */
