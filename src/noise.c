@@ -502,8 +502,10 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	/* e */
 	curve25519_generate_secret(handshake->ephemeral_private);
 	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
-					handshake->ephemeral_private))
+					handshake->ephemeral_private)){
+		pr_debug("Failed curve public key generation");
 		goto out;
+	}
 	// Generate ephemeral keypair and store and attach to message
 	message_ephemeral(dst->unencrypted_ephemeral,
 			  dst->unencrypted_ephemeral, handshake->chaining_key,
@@ -517,8 +519,10 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	/* es */
 	// mixes in dh result of our ephemeral private and their remote static
 	if (!mix_dh(handshake->chaining_key, key, handshake->ephemeral_private,
-		    handshake->remote_static))
+		    handshake->remote_static)){
+		pr_debug("Failed es init");
 		goto out;
+	}
 
 	/* s */
 	// Uses 'key' generated above to encrypt our static pub_key
@@ -570,8 +574,10 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 	u8 t[NOISE_TIMESTAMP_LEN];
 
 	down_read(&wg->static_identity.lock);
-	if (unlikely(!wg->static_identity.has_identity))
+	if (unlikely(!wg->static_identity.has_identity)){
+		pr_debug(": Device has no static identity");
 		goto out;
+	}
 
 	handshake_init(chaining_key, hash, wg->static_identity.static_public);
 
@@ -582,18 +588,24 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 	memcpy(pq_e,src->unencrypted_PQ_ephemeral,SIDH_PUBLICKEYBYTES);
 
 	/* es */
-	if (!mix_dh(chaining_key, key, wg->static_identity.static_private, e))
+	if (!mix_dh(chaining_key, key, wg->static_identity.static_private, e)){
+		pr_debug(": Failed es receiver");
 		goto out;
+	}
 
 	/* s */
 	if (!message_decrypt(s, src->encrypted_static,
-			     sizeof(src->encrypted_static), key, hash))
+			     sizeof(src->encrypted_static), key, hash)){
+		pr_debug(": Failed s receiver");
 		goto out;
+	}
 
 	/* Lookup which peer we're actually talking to */
 	peer = wg_pubkey_hashtable_lookup(&wg->peer_hashtable, s);
-	if (!peer)
+	if (!peer){
+		pr_debug(": Peer not registered");
 		goto out;
+	}
 	handshake = &peer->handshake;
 
 	/* ss */
@@ -603,8 +615,10 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 
 	/* {t} */
 	if (!message_decrypt(t, src->encrypted_timestamp,
-			     sizeof(src->encrypted_timestamp), key, hash))
+			     sizeof(src->encrypted_timestamp), key, hash)){
+		pr_debug(": Timestamp invalid");
 		goto out;
+	}
 
 	down_read(&handshake->lock);
 	replay_attack = memcmp(t, handshake->latest_timestamp,
@@ -613,8 +627,10 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 			       NSEC_PER_SEC / INITIATIONS_PER_SECOND >
 		       ktime_get_boot_fast_ns();
 	up_read(&handshake->lock);
-	if (replay_attack || flood_attack)
+	if (replay_attack || flood_attack){
+		pr_debug(": Replay attack");
 		goto out;
+	}
 
 	/* Success! Copy everything to peer */
 	down_write(&handshake->lock);
@@ -654,8 +670,10 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 	down_read(&handshake->static_identity->lock);
 	down_write(&handshake->lock);
 
-	if (handshake->state != HANDSHAKE_CONSUMED_INITIATION)
+	if (handshake->state != HANDSHAKE_CONSUMED_INITIATION){
+		pr_debug("Invalid state");
 		goto out;
+	}
 
 	dst->header.type = cpu_to_le32(MESSAGE_HANDSHAKE_RESPONSE);
 	dst->receiver_index = handshake->remote_index;
@@ -663,25 +681,30 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 	/* e */
 	curve25519_generate_secret(handshake->ephemeral_private);
 	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
-					handshake->ephemeral_private))
+					handshake->ephemeral_private)){
+		pr_debug("Failed curve public key generation, receiver");
 		goto out;
+	}
 	message_ephemeral(dst->unencrypted_ephemeral,
 			  dst->unencrypted_ephemeral, handshake->chaining_key,
 			  handshake->hash);
 	/* pq_e */
 	random_mod_Receiver(handshake->PQ_ephemeral_private);
 	ReceiverEphGen(handshake->PQ_ephemeral_private,dst->unencrypted_PQ_ephemeral);
-	// TODO: Integrate with message_ephemeral in a bit
 
 	/* ee */
 	if (!mix_dh(handshake->chaining_key, NULL, handshake->ephemeral_private,
-		    handshake->remote_ephemeral))
+		    handshake->remote_ephemeral)){
+		pr_debug("Failed ee receiver");
 		goto out;
+	}
 
 	/* se */
 	if (!mix_dh(handshake->chaining_key, NULL, handshake->ephemeral_private,
-		    handshake->remote_static))
+		    handshake->remote_static)){
+		pr_debug("Failed se receiver");
 		goto out;
+	}
 
 	/* psk */
 	mix_psk(handshake->chaining_key, handshake->hash, key,
@@ -689,8 +712,7 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 
 	/* pqk */
 	ReceiverSSGen(handshake->PQ_ephemeral_private,handshake->PQ_remote_ephemeral, pqk);
-	mix_pqk(handshake->chaining_key, handshake->hash, key,
-		pqk);
+	// mix_pqk(handshake->chaining_key, handshake->hash, key, pqk);
 
 	/* {} */
 	message_encrypt(dst->encrypted_nothing, NULL, 0, key, handshake->hash);
@@ -725,6 +747,8 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN];
 	u8 static_private[NOISE_PUBLIC_KEY_LEN];
 
+	pr_debug(": Consuming response");
+
 	down_read(&wg->static_identity.lock);
 
 	if (unlikely(!wg->static_identity.has_identity))
@@ -744,8 +768,10 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	       NOISE_PUBLIC_KEY_LEN);
 	up_read(&handshake->lock);
 
-	if (state != HANDSHAKE_CREATED_INITIATION)
+	if (state != HANDSHAKE_CREATED_INITIATION){
+		pr_debug(": Failed state verification");
 		goto fail;
+	}
 
 	/* e */
 	message_ephemeral(e, src->unencrypted_ephemeral, chaining_key, hash);
@@ -754,12 +780,16 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	memcpy(pq_e,src->unencrypted_PQ_ephemeral, SIDH_PUBLICKEYBYTES);
 
 	/* ee */
-	if (!mix_dh(chaining_key, NULL, ephemeral_private, e))
+	if (!mix_dh(chaining_key, NULL, ephemeral_private, e)){
+		pr_debug(": Failed ee");
 		goto fail;
+	}
 
 	/* se */
-	if (!mix_dh(chaining_key, NULL, wg->static_identity.static_private, e))
+	if (!mix_dh(chaining_key, NULL, wg->static_identity.static_private, e)) {
+		pr_debug(": Failed se");
 		goto fail;
+	}
 
 	/* psk */
 	mix_psk(chaining_key, hash, key, handshake->preshared_key);
@@ -767,12 +797,12 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	/* pqk */
 	// I am the initiator if i consume the response
 	InitiatorSSGen(handshake->PQ_ephemeral_private, pq_e, pqk);
-	mix_pqk(chaining_key, hash, key, pqk);
+	// mix_pqk(chaining_key, hash, key, pqk);
 
 	/* {} */
 	if (!message_decrypt(NULL, src->encrypted_nothing,
 			     sizeof(src->encrypted_nothing), key, hash)){
-		pr_debug("%s: Failed handshake decryption",wg->dev->name);
+		pr_debug(": Failed handshake decryption");
 		goto fail;
 	}
 
@@ -783,6 +813,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	 */
 	if (handshake->state != state) {
 		up_write(&handshake->lock);
+		pr_debug(": Failed handshake state");
 		goto fail;
 	}
 	memcpy(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
@@ -812,7 +843,7 @@ bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
 {
 	struct noise_keypair *new_keypair;
 	bool ret = false;
-
+	pr_debug("Beginning session");
 	down_write(&handshake->lock);
 	if (handshake->state != HANDSHAKE_CREATED_RESPONSE &&
 	    handshake->state != HANDSHAKE_CONSUMED_RESPONSE)
@@ -825,13 +856,17 @@ bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
 					  HANDSHAKE_CONSUMED_RESPONSE;
 	new_keypair->remote_index = handshake->remote_index;
 
-	if (new_keypair->i_am_the_initiator)
+	if (new_keypair->i_am_the_initiator){
 		derive_keys(&new_keypair->sending, &new_keypair->receiving,
 			    handshake->chaining_key);
-	else
+		pr_debug("Sending key: %x", &new_keypair->sending.key);
+	}
+	else {
 		derive_keys(&new_keypair->receiving, &new_keypair->sending,
 			    handshake->chaining_key);
-
+		pr_debug("Receiving key: %x", &new_keypair->receiving.key);
+	}
+		
 	handshake_zero(handshake);
 	rcu_read_lock_bh();
 	if (likely(!READ_ONCE(container_of(handshake, struct wg_peer,
