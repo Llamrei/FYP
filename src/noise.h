@@ -11,10 +11,12 @@
 /* to be put in a wrapper header */
 #include "crypto/sidh/P751/P751_api.h"
 // TODO:Aliasing Alice -> Initiator and Bob -> Reciever
+#define random_mod_Initiator random_mod_order_A_SIDHp751
 #define InitiatorEphGen EphemeralKeyGeneration_A_SIDHp751
 #define InitiatorSSGen EphemeralSecretAgreement_A_SIDHp751
+#define random_mod_Receiver random_mod_order_B_SIDHp751
 #define ReceiverEphGen EphemeralKeyGeneration_B_SIDHp751
-#define ReceiverSSGen EphemeralSecretAgreement_A_SIDHp751
+#define ReceiverSSGen EphemeralSecretAgreement_B_SIDHp751
 
 #include <linux/types.h>
 #include <linux/spinlock.h>

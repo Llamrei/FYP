@@ -17,6 +17,7 @@
 #include <linux/scatterlist.h>
 #include <linux/highmem.h>
 #include <crypto/algapi.h>
+#include <linux/module.h>
 
 /* This implements Noise_IKpsk2:
  *
@@ -509,8 +510,8 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 			  handshake->hash);
 
 	/* pq_e */
-	random_mod_order_A(handshake->PQ_ephemeral_private);
-	EphemeralKeyGeneration_A(handshake->PQ_remote_ephemeral,dst->unencrypted_PQ_ephemeral);
+	random_mod_Initiator(handshake->PQ_ephemeral_private);
+	InitiatorEphGen(handshake->PQ_remote_ephemeral,dst->unencrypted_PQ_ephemeral);
 	// TODO: Integrate with message_ephemeral in a bit
 
 	/* es */
@@ -668,8 +669,8 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 			  dst->unencrypted_ephemeral, handshake->chaining_key,
 			  handshake->hash);
 	/* pq_e */
-	random_mod_order_B(handshake->PQ_ephemeral_private);
-	EphemeralKeyGeneration_B(handshake->PQ_ephemeral_private,dst->unencrypted_PQ_ephemeral);
+	random_mod_Receiver(handshake->PQ_ephemeral_private);
+	ReceiverEphGen(handshake->PQ_ephemeral_private,dst->unencrypted_PQ_ephemeral);
 	// TODO: Integrate with message_ephemeral in a bit
 
 	/* ee */
@@ -687,7 +688,7 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 		handshake->preshared_key);
 
 	/* pqk */
-	EphemeralSecretAgreement_B(handshake->PQ_ephemeral_private,handshake->PQ_remote_ephemeral, pqk);
+	ReceiverSSGen(handshake->PQ_ephemeral_private,handshake->PQ_remote_ephemeral, pqk);
 	mix_pqk(handshake->chaining_key, handshake->hash, key,
 		pqk);
 
@@ -765,13 +766,15 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 
 	/* pqk */
 	// I am the initiator if i consume the response
-	EphemeralSecretAgreement_A(handshake->PQ_ephemeral_private, pq_e, pqk);
+	InitiatorSSGen(handshake->PQ_ephemeral_private, pq_e, pqk);
 	mix_pqk(chaining_key, hash, key, pqk);
 
 	/* {} */
 	if (!message_decrypt(NULL, src->encrypted_nothing,
-			     sizeof(src->encrypted_nothing), key, hash))
+			     sizeof(src->encrypted_nothing), key, hash)){
+		pr_debug("%s: Failed handshake decryption",wg->dev->name);
 		goto fail;
+	}
 
 	/* Success! Copy everything to peer */
 	down_write(&handshake->lock);

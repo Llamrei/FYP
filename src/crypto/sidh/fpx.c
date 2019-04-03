@@ -134,7 +134,7 @@ void fp2correction(f2elm_t a)
 
 __inline static void mp_addfast(const digit_t* a, const digit_t* b, digit_t* c)
 { // Multiprecision addition, c = a+b.    
-#if (OS_TARGET == OS_WIN) || defined(GENERIC_IMPLEMENTATION)
+#if (defined(GENERIC_IMPLEMENTATION))
 
     mp_add(a, b, c, NWORDS_FIELD);
     
@@ -175,7 +175,7 @@ __inline unsigned int mp_sub(const digit_t* a, const digit_t* b, digit_t* c, con
 __inline static digit_t mp_subfast(const digit_t* a, const digit_t* b, digit_t* c)
 { // Multiprecision subtraction, c = a-b, where lng(a) = lng(b) = 2*NWORDS_FIELD. 
   // If c < 0 then returns mask = 0xFF..F, else mask = 0x00..0   
-#if (OS_TARGET == OS_WIN) || defined(GENERIC_IMPLEMENTATION)
+#if (defined(GENERIC_IMPLEMENTATION))
 
     return (0 - (digit_t)mp_sub(a, b, c, 2*NWORDS_FIELD));
 
@@ -190,7 +190,7 @@ __inline static digit_t mp_subfast(const digit_t* a, const digit_t* b, digit_t* 
 __inline static void mp_dblsubfast(const digit_t* a, const digit_t* b, digit_t* c)
 { // Multiprecision subtraction, c = c-a-b, where lng(a) = lng(b) = 2*NWORDS_FIELD. 
   // Inputs should be s.t. c > a and c > b  
-#if (OS_TARGET == OS_WIN) || defined(GENERIC_IMPLEMENTATION)
+#if (defined(GENERIC_IMPLEMENTATION))
 
     mp_sub(c, a, c, 2*NWORDS_FIELD);
     mp_sub(c, b, c, 2*NWORDS_FIELD);
