@@ -583,7 +583,6 @@ struct wgdevice *config_read_cmd(char *argv[], int argc)
 		} else if (!strcmp(argv[0], "preshared-key") && argc >= 2 && peer) {
 			if (!parse_keyfile(peer->preshared_key, argv[1]))
 				goto error;
-			// Example of how to change within code for PSK automation
 			peer->flags |= WGPEER_HAS_PRESHARED_KEY;
 			argv += 2;
 			argc -= 2;

@@ -22,7 +22,6 @@ static int __init mod_init(void)
 {
 	int ret;
 
-	// Loads crypto functions as modules
 	if ((ret = chacha20_mod_init()) || (ret = poly1305_mod_init()) ||
 	    (ret = chacha20poly1305_mod_init()) || (ret = blake2s_mod_init()) ||
 	    (ret = curve25519_mod_init()))
@@ -33,18 +32,12 @@ static int __init mod_init(void)
 	    !wg_ratelimiter_selftest())
 		return -ENOTRECOVERABLE;
 #endif
-	// Performs any initialisation required to run the Noise protocol - in this instance it is just the hashing func
 	wg_noise_init();
 
-	// Seems to register the device with a netlink - 
-	// rtnl_link_register
-	// rtnl = routing net link
 	ret = wg_device_init();
 	if (ret < 0)
 		goto err_device;
-	// Seems 
-	// genl_register_family
-	// genl = generic network link
+
 	ret = wg_genetlink_init();
 	if (ret < 0)
 		goto err_netlink;

@@ -32,7 +32,7 @@ static void show_usage(FILE *file)
 	fprintf(file, "Available subcommands:\n");
 	for (size_t i = 0; i < sizeof(subcommands) / sizeof(subcommands[0]); ++i)
 		fprintf(file, "  %s: %s\n", subcommands[i].subcommand, subcommands[i].description);
-	fprintf(file, "You may pass `--help' to any of these subcommands to view usage.\n This version of Wireguard has been edited for the purposes of Master's project.\n");
+	fprintf(file, "You may pass `--help' to any of these subcommands to view usage.\n");
 }
 
 int main(int argc, char *argv[])

@@ -435,7 +435,6 @@ int __init wg_device_init(void)
 	if (ret)
 		goto error_pm;
 
-	// This seems to be where it registers to recieve packets
 	ret = rtnl_link_register(&link_ops);
 	if (ret)
 		goto error_netdevice;

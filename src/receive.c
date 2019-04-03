@@ -56,51 +56,43 @@ static int prepare_skb_header(struct sk_buff *skb, struct wg_device *wg)
 {
 	size_t data_offset, data_len, header_len;
 	struct udphdr *udp;
-	pr_debug("wireguard: preparing skb_header");
+
 	if (unlikely(wg_skb_examine_untrusted_ip_hdr(skb) != skb->protocol ||
 		     skb_transport_header(skb) < skb->head ||
 		     (skb_transport_header(skb) + sizeof(struct udphdr)) >
-			     skb_tail_pointer(skb))){
-		pr_debug("wireguard: Bogus IP header");
+			     skb_tail_pointer(skb)))
 		return -EINVAL; /* Bogus IP header */
-	}
 	udp = udp_hdr(skb);
 	data_offset = (u8 *)udp - skb->data;
 	if (unlikely(data_offset > U16_MAX ||
-		     data_offset + sizeof(struct udphdr) > skb->len)){
+		     data_offset + sizeof(struct udphdr) > skb->len))
 		/* Packet has offset at impossible location or isn't big enough
 		 * to have UDP fields.
 		 */
-		pr_debug("wireguard:Packet has offset at impossible location");
-		return -EINVAL;}
+		return -EINVAL;
 	data_len = ntohs(udp->len);
 	if (unlikely(data_len < sizeof(struct udphdr) ||
-		     data_len > skb->len - data_offset)){
+		     data_len > skb->len - data_offset))
 		/* UDP packet is reporting too small of a size or lying about
 		 * its size.
 		 */
-		pr_debug("wireguard:UDP packet is reporting too small of a size");
-		return -EINVAL;}
+		return -EINVAL;
 	data_len -= sizeof(struct udphdr);
 	data_offset = (u8 *)udp + sizeof(struct udphdr) - skb->data;
 	if (unlikely(!pskb_may_pull(skb,
 				data_offset + sizeof(struct message_header)) ||
-		     pskb_trim(skb, data_len + data_offset) < 0)){
-		pr_debug("line 89");
-		return -EINVAL;}
+		     pskb_trim(skb, data_len + data_offset) < 0))
+		return -EINVAL;
 	skb_pull(skb, data_offset);
-	if (unlikely(skb->len != data_len)){
+	if (unlikely(skb->len != data_len))
 		/* Final len does not agree with calculated len */
-		pr_debug("wireguard:Line 94");
-		return -EINVAL;}
+		return -EINVAL;
 	header_len = validate_header_len(skb);
-	if (unlikely(!header_len)){
-		pr_debug("wireguard:Line 98");
-		return -EINVAL;}
+	if (unlikely(!header_len))
+		return -EINVAL;
 	__skb_push(skb, data_offset);
-	if (unlikely(!pskb_may_pull(skb, data_offset + header_len))){
-		pr_debug("wireguard:Line 102");
-		return -EINVAL;}
+	if (unlikely(!pskb_may_pull(skb, data_offset + header_len)))
+		return -EINVAL;
 	__skb_pull(skb, data_offset);
 	return 0;
 }
@@ -116,7 +108,7 @@ static void wg_receive_handshake_packet(struct wg_device *wg,
 	static u64 last_under_load;
 	bool packet_needs_cookie;
 	bool under_load;
-	pr_debug("Look at line: 119");
+
 	if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_HANDSHAKE_COOKIE)) {
 		net_dbg_skb_ratelimited("%s: Receiving cookie response from %pISpfsc\n",
 					wg->dev->name, skb);
@@ -154,21 +146,17 @@ static void wg_receive_handshake_packet(struct wg_device *wg,
 							message->sender_index);
 			return;
 		}
-		pr_debug("Look at line: 157");
 		peer = wg_noise_handshake_consume_initiation(message, wg);
 		if (unlikely(!peer)) {
 			net_dbg_skb_ratelimited("%s: Invalid handshake initiation from %pISpfsc\n",
 						wg->dev->name, skb);
-			pr_debug("Look at line: 162");
 			return;
 		}
-		pr_debug("Look at line: 164");
 		wg_socket_set_peer_endpoint_from_skb(peer, skb);
 		net_dbg_ratelimited("%s: Receiving handshake initiation from peer %llu (%pISpfsc)\n",
 				    wg->dev->name, peer->internal_id,
 				    &peer->endpoint.addr);
 		wg_packet_send_handshake_response(peer);
-		pr_debug("Look at line: 170");
 		break;
 	}
 	case cpu_to_le32(MESSAGE_HANDSHAKE_RESPONSE): {
@@ -263,17 +251,14 @@ static bool decrypt_packet(struct sk_buff *skb, struct noise_symmetric_key *key,
 	struct sk_buff *trailer;
 	unsigned int offset;
 	int num_frags;
-	pr_debug("Look at line: 265");
-	if (unlikely(!key)){
-		pr_debug("Look at line: 267");
+
+	if (unlikely(!key))
 		return false;
-	}
 
 	if (unlikely(!READ_ONCE(key->is_valid) ||
 		  wg_birthdate_has_expired(key->birthdate, REJECT_AFTER_TIME) ||
 		  key->counter.receive.counter >= REJECT_AFTER_MESSAGES)) {
 		WRITE_ONCE(key->is_valid, false);
-		pr_debug("Look at line: 275");
 		return false;
 	}
 
@@ -289,32 +274,24 @@ static bool decrypt_packet(struct sk_buff *skb, struct noise_symmetric_key *key,
 	num_frags = skb_cow_data(skb, 0, &trailer);
 	offset += sizeof(struct message_data);
 	skb_pull(skb, offset);
-	if (unlikely(num_frags < 0 || num_frags > ARRAY_SIZE(sg))){
-		pr_debug("Look at line: 293");
+	if (unlikely(num_frags < 0 || num_frags > ARRAY_SIZE(sg)))
 		return false;
-	}
 
 	sg_init_table(sg, num_frags);
-	if (skb_to_sgvec(skb, sg, 0, skb->len) <= 0){
-		pr_debug("Look at line: 299");
+	if (skb_to_sgvec(skb, sg, 0, skb->len) <= 0)
 		return false;
-	}
 
 	if (!chacha20poly1305_decrypt_sg(sg, sg, skb->len, NULL, 0,
 					 PACKET_CB(skb)->nonce, key->key,
-					 simd_context)){
-			pr_debug("Look at line: 306");
+					 simd_context))
 		return false;
-	}
 
 	/* Another ugly situation of pushing and pulling the header so as to
 	 * keep endpoint information intact.
 	 */
 	skb_push(skb, offset);
-	if (pskb_trim(skb, skb->len - noise_encrypted_len(0))){
-		pr_debug("Look at line: 315");
+	if (pskb_trim(skb, skb->len - noise_encrypted_len(0)))
 		return false;
-	}
 	skb_pull(skb, offset);
 
 	return true;
@@ -557,7 +534,7 @@ static void wg_packet_consume_data(struct wg_device *wg, struct sk_buff *skb)
 	__le32 idx = ((struct message_data *)skb->data)->key_idx;
 	struct wg_peer *peer = NULL;
 	int ret;
-	pr_debug("Look at line: 551");
+
 	rcu_read_lock_bh();
 	PACKET_CB(skb)->keypair =
 		(struct noise_keypair *)wg_index_hashtable_lookup(
@@ -589,7 +566,6 @@ err_keypair:
 
 void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb)
 {
-	pr_debug("Look at line: 583");
 	if (unlikely(prepare_skb_header(skb, wg) < 0))
 		goto err;
 	switch (SKB_TYPE_LE32(skb)) {
@@ -597,11 +573,10 @@ void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb)
 	case cpu_to_le32(MESSAGE_HANDSHAKE_RESPONSE):
 	case cpu_to_le32(MESSAGE_HANDSHAKE_COOKIE): {
 		int cpu;
-	pr_debug("Look at line: 590");
+
 		if (skb_queue_len(&wg->incoming_handshakes) >
 			    MAX_QUEUED_INCOMING_HANDSHAKES ||
 		    unlikely(!rng_is_initialized())) {
-				pr_debug("Look at line: 594");
 			net_dbg_skb_ratelimited("%s: Dropping handshake packet from %pISpfsc\n",
 						wg->dev->name, skb);
 			goto err;

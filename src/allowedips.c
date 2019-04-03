@@ -31,7 +31,6 @@ static __always_inline void swap_endian(u8 *dst, const u8 *src, u8 bits)
 static void copy_and_assign_cidr(struct allowedips_node *node, const u8 *src,
 				 u8 cidr, u8 bits)
 {
-	// cidr - class inter domain routing, some sorta magic shiz
 	node->cidr = cidr;
 	node->bit_at_a = cidr / 8U;
 #ifdef __LITTLE_ENDIAN
@@ -397,8 +396,6 @@ int wg_allowedips_walk_by_peer(struct allowedips *table,
 struct wg_peer *wg_allowedips_lookup_dst(struct allowedips *table,
 					 struct sk_buff *skb)
 {
-	// convert values between host and network byte order - le and be being little endian and big endian respectively
-	// my understanding is sk_buff is for storing info about the packet - mainly pointers to data/header location info
 	if (skb->protocol == htons(ETH_P_IP))
 		return lookup(table->root4, 32, &ip_hdr(skb)->daddr);
 	else if (skb->protocol == htons(ETH_P_IPV6))

@@ -37,7 +37,7 @@ struct crypt_queue {
 };
 
 struct wg_device {
-	struct net_device *dev; //The DEVICE structure. Actually, this whole structure is a big mistake. It mixes I/O data with strictly “high-level” data, and it has to know about almost every data structure used in the INET module. 
+	struct net_device *dev;
 	struct crypt_queue encrypt_queue, decrypt_queue;
 	struct sock __rcu *sock4, *sock6;
 	struct net *creating_net;
@@ -48,7 +48,7 @@ struct wg_device {
 	int incoming_handshake_cpu;
 	struct multicore_worker __percpu *incoming_handshakes_worker;
 	struct cookie_checker cookie_checker;
-	struct pubkey_hashtable peer_hashtable; //Naming feels odd - hashtable is indexed by pubkeys but it is a table of peers?
+	struct pubkey_hashtable peer_hashtable;
 	struct index_hashtable index_hashtable;
 	struct allowedips peer_allowedips;
 	struct mutex device_update_lock, socket_update_lock;
