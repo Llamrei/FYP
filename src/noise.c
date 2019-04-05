@@ -735,7 +735,7 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 		KERN_DEBUG,"wireguard: 3. PQK: ",
 		DUMP_PREFIX_NONE, 32, 8,
 		pqk,SIDH_BYTES,0);
-	//mix_pqk(handshake->chaining_key, handshake->hash, key, pqk);
+	mix_pqk(handshake->chaining_key, handshake->hash, key, pqk);
 
 	/* {} */
 	message_encrypt(dst->encrypted_nothing, NULL, 0, key, handshake->hash);
@@ -826,7 +826,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 		KERN_DEBUG,"wireguard: 4. PQK: ",
 		DUMP_PREFIX_NONE, 32, 8,
 		pqk,SIDH_BYTES,0);
-	//mix_pqk(chaining_key, hash, key, pqk);
+	mix_pqk(chaining_key, hash, key, pqk);
 
 	/* {} */
 	if (!message_decrypt(NULL, src->encrypted_nothing,

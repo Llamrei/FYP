@@ -108,12 +108,12 @@ configure_peers
 
 tests() {
 	# Ping over IPv4
-	n2 ping -c 10 -f -W 1 192.168.241.1
-	n1 ping -c 10 -f -W 1 192.168.241.2
+	n2 ping -c 10 -f -W 5 192.168.241.1
+	n1 ping -c 10 -f -W 5 192.168.241.2
 
 	# Ping over IPv6
-	n2 ping6 -c 10 -f -W 1 fd00::1
-	n1 ping6 -c 10 -f -W 1 fd00::2
+	n2 ping6 -c 10 -f -W 5 fd00::1
+	n1 ping6 -c 10 -f -W 5 fd00::2
 
 	# TCP over IPv4
 	n2 iperf3 -s -1 -B 192.168.241.2 &
