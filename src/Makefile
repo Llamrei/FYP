@@ -51,6 +51,28 @@ install:
 	depmod -a
 	@$(MAKE) -C tools install
 
+debug-install:
+	@$(MAKE) -C $(KERNELDIR) M=$(PWD) CONFIG_WIREGUARD_DEBUG=y modules_install
+	depmod -a 
+	@$(MAKE) -C tools install
+
+setup:q
+	ip link add wg0 type wireguard
+	ip addr add 10.0.0.1/24 dev wg0
+	wg set wg0 private-key privkey
+	ip link set wg0 up
+	wg set wg0 peer sdaas allowed-ips asdsa endpoint asd a
+uninstall:
+	modprobe -r wireguard
+	rm -rf /usr/bin/wg
+	rm -rf /usr/share/man/man8/wg.8
+	rm -rf /usr/share/bash-completion/completions/wg
+	rm -rf /usr/bin/wg-quick
+	rm -rf /usr/share/man/man8/wg-quick.8
+	rm -rf /usr/share/bash-completion/completions/wg-quick
+	rm -rf /lib/systemd/system/wg-quick@.service
+	hash -d wg
+
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 DKMS_SOURCES := version.h Makefile Kbuild Kconfig dkms.conf $(filter-out version.h wireguard.mod.c tools/% tests/%,$(call rwildcard,,*.c *.h *.S *.pl *.include))
 dkms-install: $(DKMS_SOURCES)

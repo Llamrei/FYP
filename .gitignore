@@ -1,5 +1,5 @@
 cscope.out
-*.o
+*.o*
 *.d
 *.dwo
 *.ko
@@ -23,3 +23,5 @@ src/tests/qemu/distfiles/
 .cache.mk
 
 .vscode/
+*key*
+ratelimiter*
