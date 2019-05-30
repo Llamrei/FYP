@@ -108,32 +108,93 @@ configure_peers
 
 tests() {
 	# Ping over IPv4
-	n2 ping -c 10 -f -W 5 192.168.241.1
-	n1 ping -c 10 -f -W 5 192.168.241.2
+	n2 ping -c 50 -f -W 5 192.168.241.1
+	n1 ping -c 50 -f -W 5 192.168.241.2
 
 	# Ping over IPv6
-	n2 ping6 -c 10 -f -W 5 fd00::1
-	n1 ping6 -c 10 -f -W 5 fd00::2
+	n2 ping6 -c 50 -f -W 5 fd00::1
+	n1 ping6 -c 50 -f -W 5 fd00::2
 
-	# TCP over IPv4
-	n2 iperf3 -s -1 -B 192.168.241.2 &
-	waitiperf $netns2
-	n1 iperf3 -Z -t 3 -c 192.168.241.2
+	n2 tc qdisc add dev wg0 root netem loss 0.1%
+	n1 tc qdisc add dev wg0 root netem loss 0.1%
+	# Ping over IPv4
+	n2 ping -c 50 -f -W 5 192.168.241.1
+	n1 ping -c 50 -f -W 5 192.168.241.2
 
-	# TCP over IPv6
-	n1 iperf3 -s -1 -B fd00::1 &
-	waitiperf $netns1
-	n2 iperf3 -Z -t 3 -c fd00::1
+	# Ping over IPv6
+	n2 ping6 -c 50 -f -W 5 fd00::1
+	n1 ping6 -c 50 -f -W 5 fd00::2
 
-	# UDP over IPv4
-	n1 iperf3 -s -1 -B 192.168.241.1 &
-	waitiperf $netns1
-	n2 iperf3 -Z -t 3 -b 0 -u -c 192.168.241.1
+	n2 tc qdisc change dev wg0 root netem loss 0.5%
+	n1 tc qdisc change dev wg0 root netem loss 0.5%
+	# Ping over IPv4
+	n2 ping -c 50 -f -W 5 192.168.241.1
+	n1 ping -c 50 -f -W 5 192.168.241.2
 
-	# UDP over IPv6
-	n2 iperf3 -s -1 -B fd00::2 &
-	waitiperf $netns2
-	n1 iperf3 -Z -t 3 -b 0 -u -c fd00::2
+	# Ping over IPv6
+	n2 ping6 -c 50 -f -W 5 fd00::1
+	n1 ping6 -c 50 -f -W 5 fd00::2
+	
+	# # TCP over IPv4
+	# n2 iperf3 -s -1 -B 192.168.241.2 &
+	# waitiperf $netns2
+	# n1 iperf3 -Z -t 3 -c 192.168.241.2
+
+	n2 tc qdisc change dev wg0 root netem loss 1.0%
+	n1 tc qdisc change dev wg0 root netem loss 1.0%
+	# Ping over IPv4
+	n2 ping -c 50 -f -W 5 192.168.241.1
+	n1 ping -c 50 -f -W 5 192.168.241.2
+
+	# Ping over IPv6
+	n2 ping6 -c 50 -f -W 5 fd00::1
+	n1 ping6 -c 50 -f -W 5 fd00::2
+	
+
+	n2 tc qdisc change dev wg0 root netem loss 1.5%
+	n1 tc qdisc change dev wg0 root netem loss 1.5%
+	# Ping over IPv4
+	n2 ping -c 50 -f -W 5 192.168.241.1
+	n1 ping -c 50 -f -W 5 192.168.241.2
+
+	# Ping over IPv6
+	n2 ping6 -c 50 -f -W 5 fd00::1
+	n1 ping6 -c 50 -f -W 5 fd00::2
+	
+
+	n2 tc qdisc change dev wg0 root netem loss 2.0%
+	n1 tc qdisc change dev wg0 root netem loss 2.0%
+	# Ping over IPv4
+	n2 ping -c 50 -f -W 5 192.168.241.1
+	n1 ping -c 50 -f -W 5 192.168.241.2
+
+	# Ping over IPv6
+	n2 ping6 -c 50 -f -W 5 fd00::1
+	n1 ping6 -c 50 -f -W 5 fd00::2
+	
+	n2 tc qdisc del dev wg0 root
+	n1 tc qdisc del dev wg0 root
+
+
+	# # TCP over IPv4
+	# n2 iperf3 -s -1 -B 192.168.241.2 &
+	# waitiperf $netns2
+	# n1 iperf3 -Z -t 3 -c 192.168.241.2
+
+	# # TCP over IPv6
+	# n1 iperf3 -s -1 -B fd00::1 &
+	# waitiperf $netns1
+	# n2 iperf3 -Z -t 3 -c fd00::1
+
+	# # UDP over IPv4
+	# n1 iperf3 -s -1 -B 192.168.241.1 &
+	# waitiperf $netns1
+	# n2 iperf3 -Z -t 3 -b 0 -u -c 192.168.241.1
+
+	# # UDP over IPv6
+	# n2 iperf3 -s -1 -B fd00::2 &
+	# waitiperf $netns2
+	# n1 iperf3 -Z -t 3 -b 0 -u -c fd00::2
 }
 
 [[ $(ip1 link show dev wg0) =~ mtu\ ([0-9]+) ]] && orig_mtu="${BASH_REMATCH[1]}"
@@ -156,6 +217,7 @@ n2 wg set wg0 peer "$pub1" endpoint 127.0.0.1:1
 # (( timestamp != 0 ))
 
 tests
+cleanup
 ip1 link set wg0 mtu $big_mtu
 ip2 link set wg0 mtu $big_mtu
 tests
@@ -170,7 +232,7 @@ tests
 ip1 link set wg0 mtu $big_mtu
 ip2 link set wg0 mtu $big_mtu
 tests
-
+cleanup
 # Test that route MTUs work with the padding
 ip1 link set wg0 mtu 1300
 ip2 link set wg0 mtu 1300
