@@ -255,7 +255,7 @@ static void wg_destruct(struct net_device *dev)
 		put_net(wg->creating_net);
 	mutex_unlock(&wg->device_update_lock);
 
-	pr_debug("%s: Interface deleted\n", dev->name);
+	//pr_debug("%s: Interface deleted\n", dev->name);
 	free_netdev(dev);
 }
 
@@ -366,7 +366,7 @@ static int wg_newlink(struct net *src_net, struct net_device *dev,
 	 */
 	dev->priv_destructor = wg_destruct;
 
-	pr_debug("%s: Interface created\n", dev->name);
+	//pr_debug("%s: Interface created\n", dev->name);
 	return ret;
 
 err_uninit_ratelimiter:

@@ -35,7 +35,7 @@ struct magic_endpoint {
 
 ssize_t magic_send4(int sock, struct magic_endpoint *endpoint, void *buffer, size_t len)
 {
-	pr_debug("Look at line:sticky-sockets.c:38");
+	//pr_debug("Look at line:sticky-sockets.c:38");
 	ssize_t ret;
 	struct iovec iovec = {
 		.iov_base = buffer,

@@ -39,10 +39,10 @@ static void wg_packet_send_handshake_initiation(struct wg_peer *peer)
 		wg_timers_any_authenticated_packet_sent(peer);
 		atomic64_set(&peer->last_sent_handshake,
 			     ktime_get_boot_fast_ns());
-		pr_debug("Look at line:send.c:42 - pre socket send- to peer %llu, packet of size %u",peer->internal_id,sizeof(packet));
+		//pr_debug("Look at line:send.c:42 - pre socket send- to peer %llu, packet of size %u",peer->internal_id,sizeof(packet));
 		wg_socket_send_buffer_to_peer(peer, &packet, sizeof(packet),
 					      HANDSHAKE_DSCP);
-		pr_debug("Look at line:send.c:44 - post socket send - to peer %llu, packet of size %u",peer->internal_id,sizeof(packet));
+		//pr_debug("Look at line:send.c:44 - post socket send - to peer %llu, packet of size %u",peer->internal_id,sizeof(packet));
 		wg_timers_handshake_initiated(peer);
 	}
 }
@@ -210,10 +210,10 @@ static bool encrypt_packet(struct sk_buff *skb, struct noise_keypair *keypair,
 	if (skb_to_sgvec(skb, sg, sizeof(struct message_data),
 			 noise_encrypted_len(plaintext_len)) <= 0)
 		return false;
-	print_hex_dump(
-		KERN_DEBUG,"wireguard: Encryption key used: ",
-		DUMP_PREFIX_NONE, 32, 8,
-		keypair->sending.key,NOISE_SYMMETRIC_KEY_LEN,0);
+	// print_hex_dump(
+	// 	KERN_DEBUG,"wireguard: Encryption key used: ",
+	// 	DUMP_PREFIX_NONE, 32, 8,
+	// 	keypair->sending.key,NOISE_SYMMETRIC_KEY_LEN,0);
 	return chacha20poly1305_encrypt_sg(sg, sg, plaintext_len, NULL, 0,
 					   PACKET_CB(skb)->nonce,
 					   keypair->sending.key, simd_context);
@@ -341,7 +341,7 @@ static void wg_packet_create_data(struct sk_buff *first)
 						   &peer->tx_queue, first,
 						   wg->packet_crypt_wq,
 						   &wg->encrypt_queue.last_cpu);
-	pr_debug("Look at line:send.c:340 - queued send - ret = %u, port - %u", ret, wg->incoming_port);
+	//pr_debug("Look at line:send.c:340 - queued send - ret = %u, port - %u", ret, wg->incoming_port);
 	if (unlikely(ret == -EPIPE))
 		wg_queue_enqueue_per_peer(&peer->tx_queue, first,
 					  PACKET_STATE_DEAD);

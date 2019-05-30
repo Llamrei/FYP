@@ -503,7 +503,7 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	curve25519_generate_secret(handshake->ephemeral_private);
 	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
 					handshake->ephemeral_private)){
-		pr_debug("Failed curve public key generation");
+		//pr_debug("Failed curve public key generation");
 		goto out;
 	}
 	// Generate ephemeral keypair and store and attach to message
@@ -579,7 +579,7 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 	u8 e[NOISE_PUBLIC_KEY_LEN];
 	unsigned char pq_e[SIDH_PUBLICKEYBYTES];
 	u8 t[NOISE_TIMESTAMP_LEN];
-	pr_debug("Look at line:noise.c:540 - entered consume init");
+	//pr_debug("Look at line:noise.c:540 - entered consume init");
 	down_read(&wg->static_identity.lock);
 	if (unlikely(!wg->static_identity.has_identity)){
 		goto out;
@@ -684,7 +684,7 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 	down_write(&handshake->lock);
 
 	if (handshake->state != HANDSHAKE_CONSUMED_INITIATION){
-		pr_debug("Invalid state");
+		//pr_debug("Invalid state");
 		goto out;
 	}
 
@@ -695,7 +695,7 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 	curve25519_generate_secret(handshake->ephemeral_private);
 	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
 					handshake->ephemeral_private)){
-		pr_debug("Failed curve public key generation, receiver");
+		//pr_debug("Failed curve public key generation, receiver");
 		goto out;
 	}
 	message_ephemeral(dst->unencrypted_ephemeral,
@@ -770,7 +770,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN];
 	u8 static_private[NOISE_PUBLIC_KEY_LEN];
 
-	pr_debug("Consuming response");
+	//pr_debug("Consuming response");
 
 	down_read(&wg->static_identity.lock);
 
@@ -792,7 +792,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	up_read(&handshake->lock);
 
 	if (state != HANDSHAKE_CREATED_INITIATION){
-		pr_debug("Failed state verification");
+		//pr_debug("Failed state verification");
 		goto fail;
 	}
 
@@ -831,7 +831,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	/* {} */
 	if (!message_decrypt(NULL, src->encrypted_nothing,
 			     sizeof(src->encrypted_nothing), key, hash)){
-		pr_debug("Failed handshake decryption");
+		//pr_debug("Failed handshake decryption");
 		goto fail;
 	}
 
@@ -842,7 +842,7 @@ wg_noise_handshake_consume_response(struct message_handshake_response *src,
 	 */
 	if (handshake->state != state) {
 		up_write(&handshake->lock);
-		pr_debug("Failed handshake state");
+		//pr_debug("Failed handshake state");
 		goto fail;
 	}
 	memcpy(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
@@ -872,7 +872,7 @@ bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
 {
 	struct noise_keypair *new_keypair;
 	bool ret = false;
-	pr_debug("Beginning session");
+	//pr_debug("Beginning session");
 	down_write(&handshake->lock);
 	if (handshake->state != HANDSHAKE_CREATED_RESPONSE &&
 	    handshake->state != HANDSHAKE_CONSUMED_RESPONSE)
@@ -884,7 +884,7 @@ bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
 	new_keypair->i_am_the_initiator = handshake->state ==
 					  HANDSHAKE_CONSUMED_RESPONSE;
 	new_keypair->remote_index = handshake->remote_index;
-	pr_debug("5. Keypair peer %llu:",handshake->entry.peer->internal_id);
+	//pr_debug("5. Keypair peer %llu:",handshake->entry.peer->internal_id);
 	if (new_keypair->i_am_the_initiator){
 		derive_keys(&new_keypair->sending, &new_keypair->receiving,
 			    handshake->chaining_key);

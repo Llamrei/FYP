@@ -36,10 +36,10 @@ static void update_rx_stats(struct wg_peer *peer, size_t len)
 static size_t validate_header_len(struct sk_buff *skb)
 {	
 	// if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_HANDSHAKE_INITIATION)){
-	// 	pr_debug("Look at line:receive.c:39 - validating header len on an init");
-	// 	pr_debug("Look at line:receive.c:40 - struct size: %u", sizeof(struct message_handshake_initiation));
+	// 	//pr_debug("Look at line:receive.c:39 - validating header len on an init");
+	// 	//pr_debug("Look at line:receive.c:40 - struct size: %u", sizeof(struct message_handshake_initiation));
 	// }
-	// pr_debug("Look at line:receive.c:41 - entry to header len validation skb len: %u",skb->len);
+	// //pr_debug("Look at line:receive.c:41 - entry to header len validation skb len: %u",skb->len);
 	if (unlikely(skb->len < sizeof(struct message_header)))
 		return 0;
 	if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_DATA) &&
@@ -47,18 +47,18 @@ static size_t validate_header_len(struct sk_buff *skb)
 		return sizeof(struct message_data);
 	if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_HANDSHAKE_INITIATION) &&
 	    skb->len == sizeof(struct message_handshake_initiation)){
-			// pr_debug("Look at line:receive.c:49 - struct size: %u", sizeof(struct message_handshake_initiation));
+			// //pr_debug("Look at line:receive.c:49 - struct size: %u", sizeof(struct message_handshake_initiation));
 		return sizeof(struct message_handshake_initiation);
 		}
 	if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_HANDSHAKE_RESPONSE) &&
 	    skb->len == sizeof(struct message_handshake_response)){
-			// pr_debug("Look at line:receive.c:55 - parsin response length, struct size: %u",sizeof(struct message_handshake_response));
+			// //pr_debug("Look at line:receive.c:55 - parsin response length, struct size: %u",sizeof(struct message_handshake_response));
 		return sizeof(struct message_handshake_response);
 		}
 	if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_HANDSHAKE_COOKIE) &&
 	    skb->len == sizeof(struct message_handshake_cookie))
 		return sizeof(struct message_handshake_cookie);
-	pr_debug("Look at line: 52 - header length invalid");
+	//pr_debug("Look at line: 52 - header length invalid");
 	return 0;
 }
 
@@ -98,7 +98,7 @@ static int prepare_skb_header(struct sk_buff *skb, struct wg_device *wg)
 		/* Final len does not agree with calculated len */
 		return -EINVAL;
 	header_len = validate_header_len(skb);
-	// pr_debug("Look at line:receive.c:98 - header_len = %u", header_len);
+	// //pr_debug("Look at line:receive.c:98 - header_len = %u", header_len);
 	if (unlikely(!header_len))
 		return -EINVAL;
 	__skb_push(skb, data_offset);
@@ -119,7 +119,7 @@ static void wg_receive_handshake_packet(struct wg_device *wg,
 	static u64 last_under_load;
 	bool packet_needs_cookie;
 	bool under_load;
-	pr_debug("Look at line:receive.c:122 - received a handshake packet on port %u",wg->incoming_port);
+	//pr_debug("Look at line:receive.c:122 - received a handshake packet on port %u",wg->incoming_port);
 	if (SKB_TYPE_LE32(skb) == cpu_to_le32(MESSAGE_HANDSHAKE_COOKIE)) {
 		net_dbg_skb_ratelimited("%s: Receiving cookie response from %pISpfsc\n",
 					wg->dev->name, skb);
@@ -157,7 +157,7 @@ static void wg_receive_handshake_packet(struct wg_device *wg,
 			return;
 		}
 		peer = wg_noise_handshake_consume_initiation(message, wg);
-		pr_debug("Look at line:receive.c:160 - consumed init on port %u",wg->incoming_port);
+		//pr_debug("Look at line:receive.c:160 - consumed init on port %u",wg->incoming_port);
 		if (unlikely(!peer)) {
 			net_dbg_skb_ratelimited("%s: Invalid handshake initiation from %pISpfsc\n",
 						wg->dev->name, skb);
@@ -179,7 +179,7 @@ static void wg_receive_handshake_packet(struct wg_device *wg,
 			return;
 		}
 		peer = wg_noise_handshake_consume_response(message, wg);
-		pr_debug("Look at line:receive.c:182 - consumed response on port %u",wg->incoming_port);
+		//pr_debug("Look at line:receive.c:182 - consumed response on port %u",wg->incoming_port);
 		if (unlikely(!peer)) {
 			net_dbg_skb_ratelimited("%s: Invalid handshake response from %pISpfsc\n",
 						wg->dev->name, skb);
@@ -532,11 +532,11 @@ void wg_packet_decrypt_worker(struct work_struct *work)
 					   &PACKET_CB(skb)->keypair->receiving,
 					   &simd_context)) ?
 				PACKET_STATE_CRYPTED : PACKET_STATE_DEAD;
-		pr_debug("Look at line:receive.c:536 - Post decryption packet state: %u", state);
-		print_hex_dump(
-		KERN_DEBUG,"wireguard: Decryption key used: ",
-		DUMP_PREFIX_NONE, 32, 8,
-		&PACKET_CB(skb)->keypair->receiving,NOISE_SYMMETRIC_KEY_LEN,0);
+		//pr_debug("Look at line:receive.c:536 - Post decryption packet state: %u", state);
+		// print_hex_dump(
+		// KERN_DEBUG,"wireguard: Decryption key used: ",
+		// DUMP_PREFIX_NONE, 32, 8,
+		// &PACKET_CB(skb)->keypair->receiving,NOISE_SYMMETRIC_KEY_LEN,0);
 		wg_queue_enqueue_per_peer_napi(&PACKET_PEER(skb)->rx_queue, skb,
 					       state);
 		simd_relax(&simd_context);
@@ -550,7 +550,7 @@ static void wg_packet_consume_data(struct wg_device *wg, struct sk_buff *skb)
 	__le32 idx = ((struct message_data *)skb->data)->key_idx;
 	struct wg_peer *peer = NULL;
 	int ret;
-	pr_debug("Look at line:receive.c:549 - consuming data from port %u",wg->incoming_port);
+	//pr_debug("Look at line:receive.c:549 - consuming data from port %u",wg->incoming_port);
 	rcu_read_lock_bh();
 	PACKET_CB(skb)->keypair =
 		(struct noise_keypair *)wg_index_hashtable_lookup(
@@ -566,7 +566,7 @@ static void wg_packet_consume_data(struct wg_device *wg, struct sk_buff *skb)
 						   &peer->rx_queue, skb,
 						   wg->packet_crypt_wq,
 						   &wg->decrypt_queue.last_cpu);
-	pr_debug("Look at line:receive.c:565 - ret queue = %u, device - %s, port - %u", ret, skb->dev->name, wg->incoming_port);
+	//pr_debug("Look at line:receive.c:565 - ret queue = %u, device - %s, port - %u", ret, skb->dev->name, wg->incoming_port);
 	if (unlikely(ret == -EPIPE))
 		wg_queue_enqueue_per_peer(&peer->rx_queue, skb, PACKET_STATE_DEAD);
 	if (likely(!ret || ret == -EPIPE)) {
@@ -583,7 +583,7 @@ err_keypair:
 
 void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb)
 {
-	pr_debug("Look at line:receive.c:581 - received a packet on port %u", wg->incoming_port);
+	//pr_debug("Look at line:receive.c:581 - received a packet on port %u", wg->incoming_port);
 	if (unlikely(prepare_skb_header(skb, wg) < 0))
 		goto err;
 	switch (SKB_TYPE_LE32(skb)) {
@@ -591,7 +591,7 @@ void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb)
 	case cpu_to_le32(MESSAGE_HANDSHAKE_RESPONSE):
 	case cpu_to_le32(MESSAGE_HANDSHAKE_COOKIE): {
 		int cpu;
-		pr_debug("Look at line:receive.c:578 - it was a handshake packet - port %u", wg->incoming_port);
+		//pr_debug("Look at line:receive.c:578 - it was a handshake packet - port %u", wg->incoming_port);
 		if (skb_queue_len(&wg->incoming_handshakes) >
 			    MAX_QUEUED_INCOMING_HANDSHAKES ||
 		    unlikely(!rng_is_initialized())) {
@@ -609,7 +609,7 @@ void wg_packet_receive(struct wg_device *wg, struct sk_buff *skb)
 		break;
 	}
 	case cpu_to_le32(MESSAGE_DATA):
-		pr_debug("Look at line:receive.c:608 - it was a data packet - port %u",wg->incoming_port);
+		//pr_debug("Look at line:receive.c:608 - it was a data packet - port %u",wg->incoming_port);
 		PACKET_CB(skb)->ds = ip_tunnel_get_dsfield(ip_hdr(skb), skb);
 		wg_packet_consume_data(wg, skb);
 		break;

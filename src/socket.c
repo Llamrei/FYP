@@ -20,7 +20,7 @@
 static int send4(struct wg_device *wg, struct sk_buff *skb,
 		 struct endpoint *endpoint, u8 ds, struct dst_cache *cache)
 {
-	pr_debug("Look at line:socket.c:23 - transmitting ipV4");
+	//pr_debug("Look at line:socket.c:23 - transmitting ipV4");
 	struct flowi4 fl = {
 		.saddr = endpoint->src4.s_addr,
 		.daddr = endpoint->addr4.sin_addr.s_addr,
@@ -182,7 +182,7 @@ int wg_socket_send_skb_to_peer(struct wg_peer *peer, struct sk_buff *skb, u8 ds)
 	if (peer->endpoint.addr.sa_family == AF_INET){
 		ret = send4(peer->device, skb, &peer->endpoint, ds,
 			    &peer->endpoint_cache);
-		pr_debug("Look at line:socket.c:185 - sent ipv4 TO %pISpfsc, ret = %u",&peer->endpoint.addr,ret);
+		//pr_debug("Look at line:socket.c:185 - sent ipv4 TO %pISpfsc, ret = %u",&peer->endpoint.addr,ret);
 	}
 	else if (peer->endpoint.addr.sa_family == AF_INET6)
 		ret = send6(peer->device, skb, &peer->endpoint, ds,
@@ -233,7 +233,7 @@ int wg_socket_send_buffer_as_reply_to_skb(struct wg_device *wg,
 
 	if (endpoint.addr.sa_family == AF_INET){		
 		ret = send4(wg, skb, &endpoint, 0, NULL);
-		pr_debug("Look at line:socket.c:235 - sent ipv4 TO %pISpfsc, ret = %u",endpoint.addr,ret);
+		//pr_debug("Look at line:socket.c:235 - sent ipv4 TO %pISpfsc, ret = %u",endpoint.addr,ret);
 	}
 	else if (endpoint.addr.sa_family == AF_INET6)
 		ret = send6(wg, skb, &endpoint, 0, NULL);
@@ -359,7 +359,7 @@ static void set_sock_opts(struct socket *sock)
 
 int wg_socket_init(struct wg_device *wg, u16 port)
 {
-	pr_debug("Look at line:socket.c:357 - intialising socket");
+	//pr_debug("Look at line:socket.c:357 - intialising socket");
 	int ret;
 	struct udp_tunnel_sock_cfg cfg = {
 		.sk_user_data = wg,

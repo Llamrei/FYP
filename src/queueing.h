@@ -154,11 +154,11 @@ static inline int wg_queue_enqueue_per_device_and_peer(
 	 * packet as soon as it can.
 	 */
 	cpu = wg_cpumask_next_online(next_cpu);
-	pr_debug("Look at line:queueing.h:157 - about to queue skb to cpu %u",cpu);
+	//pr_debug("Look at line:queueing.h:157 - about to queue skb to cpu %u",cpu);
 	if (unlikely(ptr_ring_produce_bh(&device_queue->ring, skb)))
 		return -EPIPE;
 	queue_work_on(cpu, wq, &per_cpu_ptr(device_queue->worker, cpu)->work);
-	pr_debug("Look at line:queueing.h:161- qu1");
+	//pr_debug("Look at line:queueing.h:161- qu1");
 	return 0;
 }
 
@@ -172,11 +172,11 @@ static inline void wg_queue_enqueue_per_peer(struct crypt_queue *queue,
 	struct wg_peer *peer = wg_peer_get(PACKET_PEER(skb));
 
 	atomic_set_release(&PACKET_CB(skb)->state, state);
-	pr_debug("Look at line:queueing.h:175 - normal skb scheduling - peer only");
+	//pr_debug("Look at line:queueing.h:175 - normal skb scheduling - peer only");
 	queue_work_on(wg_cpumask_choose_online(&peer->serial_work_cpu,
 					       peer->internal_id),
 		      peer->device->packet_crypt_wq, &queue->work);
-	pr_debug("Look at line:queueing.h:161- qu2");
+	//pr_debug("Look at line:queueing.h:161- qu2");
 	wg_peer_put(peer);
 }
 
@@ -190,9 +190,9 @@ static inline void wg_queue_enqueue_per_peer_napi(struct crypt_queue *queue,
 	struct wg_peer *peer = wg_peer_get(PACKET_PEER(skb));
 
 	atomic_set_release(&PACKET_CB(skb)->state, state);
-	pr_debug("Look at line:queueing.h:191 - napi skb scheduling");
+	//pr_debug("Look at line:queueing.h:191 - napi skb scheduling");
 	napi_schedule(&peer->napi);
-	pr_debug("Look at line:queueing.h:161- qu3");
+	//pr_debug("Look at line:queueing.h:161- qu3");
 	wg_peer_put(peer);
 }
 
