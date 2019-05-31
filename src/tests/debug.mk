@@ -23,6 +23,9 @@ insert: debug
 test: insert
 	sudo PATH="$(shell pwd)/tools:$$PATH:/usr/sbin:/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" ./tests/netns.sh
 
+handshake_test: insert
+	sudo PATH="$(shell pwd)/tools:$$PATH:/usr/sbin:/sbin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin" ./tests/handshake_tester.sh
+
 test-qemu:
 	$(MAKE) -C tests/qemu
 
