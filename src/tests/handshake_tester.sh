@@ -86,18 +86,18 @@ configure_peers() {
 }
 configure_peers
 
-for packet_loss in 0.1% 0.5% 1% 1.5% 2.0%
-do
+# for packet_loss in 0.1% 0.5% 1% 1.5% 2.0%
+# do
 for attempt in {1..50}
 do
-n1 tc qdisc add dev wg0 root netem loss $packet_loss
+# n1 tc qdisc add dev wg0 root netem loss $packet_loss
 n1 ping -c 1 192.168.241.2 > tmp_results
 # sudo make test > tmp_results
-cat tmp_results | grep "packets transmitted" >> transmitted_results_$packet_loss.txt
-cat tmp_results | grep rtt >> rtt_results_$packet_loss.txt
+cat tmp_results | grep "packets transmitted" >> transmitted_results_0.txt
+cat tmp_results | grep rtt >> rtt_results_0.txt
 tear_nodes
 setup_nodes
 configure_peers
 done
-done
-cleanup
+# done
+# cleanup
