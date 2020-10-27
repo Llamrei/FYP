@@ -5,3 +5,5 @@ This is a copy of the wireguard source from when i was doing my masters in 2019.
 I have added some potentially quantum secure assymetric key exchange steps into the NOISE key change.
 
 This was done by Alex Larionov as a final year project in completion of MEng at Imperial.
+
+Mad code changes.
